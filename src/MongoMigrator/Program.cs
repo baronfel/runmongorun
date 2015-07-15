@@ -1,17 +1,17 @@
 ﻿using CommandLine;
 using CommandLine.Text;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MongoMigrator
 {
     class Options
     {
         [Option('m', "mongoPath", Required = false, HelpText = "The path to the mongo executable to use.  If not set, assumes mongo.exe is on your PATH.")]
-        public string MongoPath { get; set; }
+        public string Server { get; set; }
+
+        [Option('d', "database", Required = true, HelpText = "The mongo database name to connect to.")];
+        public string Database { get; set; }
 
         [Option('f', "manifest", Required = true, HelpText = "The path to the file with the list of js scripts to update.")]
         public string ManifestFile { get; set; }
@@ -22,11 +22,11 @@ namespace MongoMigrator
         [Option('p', "port", Required = false, HelpText = "The port to connect on. If not provided default to 27017.")]
         public int? Port { get; set; }
 
-        [Option('c', "collection", Required = true, HelpText = "The name of the collection to connect to.")]
-        public string CollectionName { get; set; }
-
         [Option('w', "warn", Required = false, HelpText = "If set, allows scripts marked as one-time to change.")]
         public bool? WarnOnOneTimeScriptChange { get; set; }
+
+        [Option("changeSetColl", Required = false, HelpText = "If set, changesets will be retrieved/persisted to the given collection.")]
+        public string ChangeSetCollectionName { get; set; }
 
         [ParserState]
         public IParserState LastParserState { get; set; }
@@ -42,8 +42,7 @@ namespace MongoMigrator
                 AddDashesToOption = true
             };
 
-
-            if (this.LastParserState.Errors.Any())
+            if (LastParserState.Errors.Any())
             {
                 var errors = help.RenderParsingErrorsText(this, 2);
                 if (!string.IsNullOrEmpty(errors))
@@ -75,9 +74,18 @@ namespace MongoMigrator
             {
                 var warn = parsed.WarnOnOneTimeScriptChange.GetValueOrDefault(false);
                 var port = parsed.Port.GetValueOrDefault(27017);
+                var csCollectionName = string.IsNullOrEmpty(parsed.ChangeSetCollectionName) ? "migrations" : parsed.ChangeSetCollectionName;
 
-                var result = Migrate(parsed.MongoPath, parsed.HostName, parsed.Port, parsed.CollectionName, parsed.ManifestFile, parsed.WarnOnOneTimeScriptChange);
+                var result = Migrator.Migrator.Migrate(parsed.Server, parsed.HostName, port, parsed.Database, parsed.ManifestFile, warn, csCollectionName, Console.WriteLine, Console.Error.WriteLine).Result;
+                if (result.HasError)
+                {
+                    Console.Error.WriteLine(result.Error);
+                    Environment.ExitCode = -1;
+                    return;
+                }
 
+                Environment.ExitCode = 0;
+                return;
 
             }
             else

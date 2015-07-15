@@ -6,6 +6,7 @@ nuget NUnit.Runners
 nuget FAKE
 nuget SourceLink.Fake
 nuget CommandLineParser
+nuget MongoDB.Driver
 
 github fsharp/FAKE modules/Octokit/Octokit.fsx
 

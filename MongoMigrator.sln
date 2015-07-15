@@ -33,6 +33,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{ED8079DD
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoMigrator", "src\MongoMigrator\MongoMigrator.csproj", "{BD8D305D-1E63-4386-812B-4C1A5CE24332}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migrator", "src\Migrator\Migrator.csproj", "{CA12162E-0B8E-46BE-A887-D03F8211A3F4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,6 +45,10 @@ Global
 		{BD8D305D-1E63-4386-812B-4C1A5CE24332}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD8D305D-1E63-4386-812B-4C1A5CE24332}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD8D305D-1E63-4386-812B-4C1A5CE24332}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA12162E-0B8E-46BE-A887-D03F8211A3F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA12162E-0B8E-46BE-A887-D03F8211A3F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA12162E-0B8E-46BE-A887-D03F8211A3F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA12162E-0B8E-46BE-A887-D03F8211A3F4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
