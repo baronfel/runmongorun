@@ -22,7 +22,8 @@ namespace Migrator
                     || x.dbcs == null 
                     || SameButWarning(x.cs, x.dbcs, warn, logFunc, errFunc));
 
-            changesToRun.Aggregate()
+            //changesToRun.Aggregate()
+            return Result<int>.Pass(0);
         }
 
         private static bool SameButWarning(ChangeSet cs, ChangeSet dbcs, bool warn, Action<string> logFunc, Action<string> errFunc)

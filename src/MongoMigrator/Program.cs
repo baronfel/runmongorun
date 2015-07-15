@@ -10,7 +10,7 @@ namespace MongoMigrator
         [Option('m', "mongoPath", Required = false, HelpText = "The path to the mongo executable to use.  If not set, assumes mongo.exe is on your PATH.")]
         public string Server { get; set; }
 
-        [Option('d', "database", Required = true, HelpText = "The mongo database name to connect to.")];
+        [Option('d', "database", Required = true, HelpText = "The mongo database name to connect to.")]
         public string Database { get; set; }
 
         [Option('f', "manifest", Required = true, HelpText = "The path to the file with the list of js scripts to update.")]
