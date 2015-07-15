@@ -1,4 +1,4 @@
-﻿namespace FSharp.ProjectTemplate
+namespace MongoMigrator
 
 /// Documentation for my library
 ///

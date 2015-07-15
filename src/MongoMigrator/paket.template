@@ -1,0 +1,23 @@
+type project
+owners
+    Thomas Phipps
+authors 
+    Thomas Phipps
+projectUrl
+    http://github.com/dirkelfman/MongoMigrator
+iconUrl
+    https://raw.githubusercontent.com/dirkelfman/MongoMigrator/master/docs/files/img/logo.png
+licenseUrl
+    http://github.com/dirkelfman/MongoMigrator/blob/master/LICENSE.txt
+requireLicenseAcceptance
+    false
+copyright
+    Copyright 2015
+tags
+    mongo devops
+summary
+    A repeatable, deterministic mongo script runner.
+description
+    A repeatable, deterministic mongo script runner.
+
+

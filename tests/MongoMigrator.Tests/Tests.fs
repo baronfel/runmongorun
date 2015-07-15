@@ -1,6 +1,6 @@
-﻿module FSharp.ProjectScaffold.Tests
+module MongoMigrator.Tests
 
-open FSharp.ProjectTemplate
+open MongoMigrator
 open NUnit.Framework
 
 [<Test>]
