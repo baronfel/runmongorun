@@ -34,6 +34,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FSharp.Core, Version=4.4.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -52,6 +53,10 @@
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Utils\Utils.fsproj">
+      <Project>{4e4eb77d-ef1e-4a27-a25c-fc4a16bb318f}</Project>
+      <Name>Utils</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Migrator\Migrator.csproj">
       <Project>{ca12162e-0b8e-46be-a887-d03f8211a3f4}</Project>
       <Name>Migrator</Name>

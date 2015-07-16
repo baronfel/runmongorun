@@ -3,13 +3,18 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Chessie.ErrorHandling;
+using Chessie.ErrorHandling.CSharp;
+
+using static Func.Utils;
 using static Migrator.ProcessUtil;
+
 
 namespace Migrator
 {
     public class Migrator
     {
-        public static async Task<Result<ExecResult>> Migrate(string mongoPath, string hostname, int port, string database, string manifestPath, bool warn, string changeSetCollectionName, Action<string> logFunc, Action<string> errFunc)
+        public static async Task<Result<string, string>> Migrate(string mongoPath, string hostname, int port, string database, string manifestPath, bool warn, string changeSetCollectionName, Action<string> logFunc, Action<string> errFunc)
         {
             var repo = new ChangeSetRepo(hostname, port, database, changeSetCollectionName);
             var changesets = ManifestReader.ReadScripts(manifestPath);
@@ -25,16 +30,20 @@ namespace Migrator
             var info = new StringBuilder();
             foreach(var changeSet in changesToRun)
             {
-                var exec = ExecCommandChangeSet(mongoPath, hostname, port, database, changeSet);
-                if (exec.ExitCode != 0) return Lift(exec);
+                var result = ExecCommandChangeSet(mongoPath, hostname, port, database, changeSet);
+                if (result.IsBad) return Result<string,string>.FailWith(result.FailedWith());
 
-                var upsertResult = await Result<ChangeSet>.LiftAsync(async () => await repo.Upsert(changeSet), () => changeSet);
-                if (upsertResult.HasError) return Result<ExecResult>.Fail(new ExecResult(-1, exec.Info, upsertResult.Error.Message), upsertResult.Error);
+                var upsertResult = Result<ChangeSet, Exception>.Try(() => repo.Upsert(changeSet).Result).MapError(e => e.Message);
+                if (upsertResult.IsBad)
+                {
+                    var messages = new[] { result.SucceededWith() }.Concat(upsertResult.FailedWith().Select(Id));
+                    return Result<string, string>.FailWith(messages);
+                }
 
-                info.Append(exec.Info);
+                result.Match((s, ms) => info.Append(s), fs => { return; });
             }
 
-            return Result<ExecResult>.Pass(new ExecResult(0, info.ToString(), string.Empty));
+            return Result<string, string>.Succeed(info.ToString());
         }
 
         private static bool SameButWarning(ChangeSet cs, ChangeSet dbcs, bool warn, Action<string> logFunc, Action<string> errFunc)
@@ -56,7 +65,7 @@ namespace Migrator
             return true;
         }
 
-        static ExecResult ExecCommandChangeSet(string mongoPath, string hostName, int port, string database, ChangeSet changeSet)
+        static Result<string, string> ExecCommandChangeSet(string mongoPath, string hostName, int port, string database, ChangeSet changeSet)
         {
             var fqnMongoPath = Path.Combine(mongoPath, "mongo.exe");
             var connstring = string.Format("{hostName}:{port}/{database}", hostName, port, database);
@@ -67,6 +76,27 @@ namespace Migrator
                 );
 
             return ExecProcess(fqnMongoPath, connstring, ops);
+        }
+    }
+
+    public static class ResultExt
+    {
+        /// <summary>
+        /// transforms the error type of a result according to some function. if the result is Ok, rewraps the success;
+        /// </summary>
+        /// <typeparam name="TSuccess"></typeparam>
+        /// <typeparam name="TOrigMessage"></typeparam>
+        /// <typeparam name="TTransformedMessage"></typeparam>
+        /// <param name="r"></param>
+        /// <param name="errorTransform"></param>
+        /// <returns></returns>
+        public static Result<TSuccess, TTransformedMessage> MapError<TSuccess, TOrigMessage, TTransformedMessage>(this Result<TSuccess, TOrigMessage> r, Func<TOrigMessage, TTransformedMessage> errorTransform)
+        {
+            Result<TSuccess, TTransformedMessage> output = null;
+            r.Match(
+                (s, msgs) => output = Result<TSuccess, TTransformedMessage>.Succeed(s),
+                fails => output = Result<TSuccess, TTransformedMessage>.FailWith(fails.Select(errorTransform)));
+            return output;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿
+using Chessie.ErrorHandling;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -20,7 +21,7 @@ namespace Migrator
             public string Footer { get; }
         }
 
-        public static ExecResult ExecProcess(string exepath, string args, ConsoleOps op)
+        public static Result<string, string> ExecProcess(string exepath, string args, ConsoleOps op)
         {
             var startInfo = new ProcessStartInfo()
             {
@@ -54,26 +55,10 @@ namespace Migrator
             process.StandardInput.WriteLine(op.Footer);
             process.StandardInput.WriteLine("exit");
             process.WaitForExit();
-            return new ExecResult(process.ExitCode, outBuilder.ToString(), errBuilder.ToString());
+
+            if (!string.IsNullOrEmpty(errBuilder.ToString())) return Result<string, string>.FailWith(errBuilder.ToString());
+            return Result<string,string>.Succeed(outBuilder.ToString());
         }
 
-        public struct ExecResult
-        {
-            public ExecResult(int exitCode, string info, string err)
-            {
-                ExitCode = exitCode;
-                Info = info;
-                Error = err;
-            }
-            public int ExitCode { get; }
-            public string Info { get; }
-            public string Error { get; }
-        }
-
-        public static Result<ExecResult> Lift(ExecResult r)
-        {
-            if (r.ExitCode != 0) return Result<ExecResult>.Fail(r, new System.Exception(r.Error));
-            return Result<ExecResult>.Pass(r);
-        }
     }
 }

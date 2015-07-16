@@ -9,5 +9,6 @@ nuget CommandLineParser
 nuget MongoDB.Driver
 
 github fsharp/FAKE modules/Octokit/Octokit.fsx
+github fsprojects/Chessie src/Chessie/ErrorHandling.fs
 
 

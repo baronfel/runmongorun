@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using MongoDB.Driver;
 using System;
+using Chessie.ErrorHandling;
 
 namespace Migrator
 {

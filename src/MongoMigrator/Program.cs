@@ -3,6 +3,8 @@ using CommandLine.Text;
 using System;
 using System.Linq;
 
+using Chessie.ErrorHandling.CSharp;
+
 namespace MongoMigrator
 {
     class Options
@@ -77,26 +79,27 @@ namespace MongoMigrator
                 var csCollectionName = string.IsNullOrEmpty(parsed.ChangeSetCollectionName) ? "migrations" : parsed.ChangeSetCollectionName;
 
                 var result = Migrator.Migrator.Migrate(parsed.Server, parsed.HostName, port, parsed.Database, parsed.ManifestFile, warn, csCollectionName, Console.WriteLine, Console.Error.WriteLine).Result;
-                Console.WriteLine(result.Value.Info);
-                if (result.HasError)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Error.WriteLine(result.Error);
-                    Console.ResetColor();
-                    Environment.ExitCode = -1;
-                    return;
-                }
-
-                Environment.ExitCode = 0;
-                return;
-
+                result.Match(
+                    (s, ms) =>
+                    {
+                        Console.WriteLine(s);
+                        Environment.Exit(0);
+                    },
+                    fails =>
+                    {
+                        Console.WriteLine(fails.Head);
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Error.WriteLine(fails.TailOrNull);
+                        Console.ResetColor();
+                        Environment.Exit(-1);
+                    });
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(parsed.GetUsage());
                 Console.ResetColor();
-                Environment.ExitCode = -1;
+                Environment.Exit(-1);
             }
         }
     }

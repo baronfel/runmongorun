@@ -31,3 +31,6 @@ GITHUB
   specs:
     modules/Octokit/Octokit.fsx (88e01a649ff2c6cc0060dc6b15b811bb54ca2d66)
       Octokit
+  remote: fsprojects/Chessie
+  specs:
+    src/Chessie/ErrorHandling.fs (2e4d76714d6d01ac64913317870f05d7f7ae8e37)
