@@ -77,9 +77,12 @@ namespace MongoMigrator
                 var csCollectionName = string.IsNullOrEmpty(parsed.ChangeSetCollectionName) ? "migrations" : parsed.ChangeSetCollectionName;
 
                 var result = Migrator.Migrator.Migrate(parsed.Server, parsed.HostName, port, parsed.Database, parsed.ManifestFile, warn, csCollectionName, Console.WriteLine, Console.Error.WriteLine).Result;
+                Console.WriteLine(result.Value.Info);
                 if (result.HasError)
                 {
+                    Console.ForegroundColor = ConsoleColor.Red;
                     Console.Error.WriteLine(result.Error);
+                    Console.ResetColor();
                     Environment.ExitCode = -1;
                     return;
                 }
@@ -90,7 +93,9 @@ namespace MongoMigrator
             }
             else
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(parsed.GetUsage());
+                Console.ResetColor();
                 Environment.ExitCode = -1;
             }
         }

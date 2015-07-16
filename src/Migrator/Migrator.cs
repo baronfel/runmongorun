@@ -1,16 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Migrator.ProcessUtil;
 
 namespace Migrator
 {
     public class Migrator
     {
-        public static async Task<Result<int>> Migrate(string mongoPath, string hostname, int port, string database, string manifestPath, bool warn, string changeSetCollectionName, Action<string> logFunc, Action<string> errFunc)
+        public static async Task<Result<ExecResult>> Migrate(string mongoPath, string hostname, int port, string database, string manifestPath, bool warn, string changeSetCollectionName, Action<string> logFunc, Action<string> errFunc)
         {
             var repo = new ChangeSetRepo(hostname, port, database, changeSetCollectionName);
             var changesets = ManifestReader.ReadScripts(manifestPath);
@@ -20,10 +19,22 @@ namespace Migrator
                 dbPairs.Where(x => 
                     x.cs.AlwaysRuns 
                     || x.dbcs == null 
-                    || SameButWarning(x.cs, x.dbcs, warn, logFunc, errFunc));
+                    || SameButWarning(x.cs, x.dbcs, warn, logFunc, errFunc))
+                    .Select(x => x.cs);
 
-            //changesToRun.Aggregate()
-            return Result<int>.Pass(0);
+            var info = new StringBuilder();
+            foreach(var changeSet in changesToRun)
+            {
+                var exec = ExecCommandChangeSet(mongoPath, hostname, port, database, changeSet);
+                if (exec.ExitCode != 0) return Lift(exec);
+
+                var upsertResult = await Result<ChangeSet>.LiftAsync(async () => await repo.Upsert(changeSet), () => changeSet);
+                if (upsertResult.HasError) return Result<ExecResult>.Fail(new ExecResult(-1, exec.Info, upsertResult.Error.Message), upsertResult.Error);
+
+                info.Append(exec.Info);
+            }
+
+            return Result<ExecResult>.Pass(new ExecResult(0, info.ToString(), string.Empty));
         }
 
         private static bool SameButWarning(ChangeSet cs, ChangeSet dbcs, bool warn, Action<string> logFunc, Action<string> errFunc)
@@ -45,47 +56,17 @@ namespace Migrator
             return true;
         }
 
-        static Tuple<ChangeSet, int, string, string> ExecCommandChangeSet(string mongoPath, string hostName, string port, string database, ChangeSet changeSet)
+        static ExecResult ExecCommandChangeSet(string mongoPath, string hostName, int port, string database, ChangeSet changeSet)
         {
             var fqnMongoPath = Path.Combine(mongoPath, "mongo.exe");
             var connstring = string.Format("{hostName}:{port}/{database}", hostName, port, database);
+            var ops = new ConsoleOps(
+                "print ('Begining ChangeSet[{changeSet.ChangId}] from File[{changeSet.File}]')",
+                changeSet.Content,
+                "print ('Finishing ChangeSet[{changeSet.ChangId}] from File[{changeSet.File}]')"
+                );
 
-            var startInfo = new ProcessStartInfo()
-            {
-                FileName = fqnMongoPath,
-                Arguments = connstring,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true,
-                RedirectStandardInput = true,
-                UseShellExecute = false
-            };
-
-            var process = new Process
-            {
-                StartInfo = startInfo,
-            };
-
-            var outBuilder = new StringBuilder();
-            var errBuilder = new StringBuilder();
-            process.OutputDataReceived += (o, d) => outBuilder.AppendLine(d.Data);
-            process.ErrorDataReceived += (o, d) => errBuilder.AppendLine(d.Data);
-            process.Start();
-            process.StandardInput.WriteLine("print ('Begining ChangeSet[{0}] from File[{1}]')", changeSet.ChangeId, changeSet.File);
-
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
-            foreach (var line in changeSet.Content)
-            {
-                process.StandardInput.WriteLine(line);
-            }
-
-            process.StandardInput.WriteLine("print ('Finishing ChangeSet[{0}] from File[{1}]')", changeSet.ChangeId, changeSet.File);
-            process.StandardInput.WriteLine("exit");
-            process.WaitForExit();
-
-            return Tuple.Create(changeSet, process.ExitCode, outBuilder.ToString(), errBuilder.ToString());
+            return ExecProcess(fqnMongoPath, connstring, ops);
         }
-
-
     }
 }
