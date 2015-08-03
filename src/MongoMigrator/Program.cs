@@ -9,7 +9,7 @@ namespace MongoMigrator
 {
     class Options
     {
-        [Option('m', "mongoPath", Required = false, HelpText = "The path to the mongo executable to use.  If not set, assumes mongo.exe is on your PATH.")]
+        [Option('m', "mongoPath", Required = false, DefaultValue = "mongo.exe", HelpText = "The path to the mongo executable to use.  If not set, assumes mongo.exe is on your PATH.")]
         public string Server { get; set; }
 
         [Option('d', "database", Required = true, HelpText = "The mongo database name to connect to.")]
@@ -18,16 +18,16 @@ namespace MongoMigrator
         [Option('f', "manifest", Required = true, HelpText = "The path to the file with the list of js scripts to update.")]
         public string ManifestFile { get; set; }
 
-        [Option('h', "host", Required = false, HelpText = "The mongo server hostname.  If not provided defaults to localhost.")]
+        [Option('h', "host", Required = false, DefaultValue = "localhost", HelpText = "The mongo server hostname.  If not provided defaults to localhost.")]
         public string HostName { get; set; }
 
-        [Option('p', "port", Required = false, HelpText = "The port to connect on. If not provided default to 27017.")]
-        public int? Port { get; set; }
+        [Option('p', "port", Required = false, DefaultValue = 27017, HelpText = "The port to connect on. If not provided default to 27017.")]
+        public int Port { get; set; }
 
-        [Option('w', "warn", Required = false, HelpText = "If set, allows scripts marked as one-time to change.")]
-        public bool? WarnOnOneTimeScriptChange { get; set; }
+        [Option('w', "warn", Required = false, DefaultValue = false, HelpText = "If set, allows scripts marked as one-time to change.")]
+        public bool WarnOnOneTimeScriptChange { get; set; }
 
-        [Option("changeSetColl", Required = false, HelpText = "If set, changesets will be retrieved/persisted to the given collection.")]
+        [Option("changeSetColl", Required = false, DefaultValue = "migrations", HelpText = "If set, changesets will be retrieved/persisted to the given collection.")]
         public string ChangeSetCollectionName { get; set; }
 
         [ParserState]
@@ -74,25 +74,22 @@ namespace MongoMigrator
             var parser = new Parser(s => s = _parserSettings);
             if (parser.ParseArguments(args, parsed))
             {
-                var warn = parsed.WarnOnOneTimeScriptChange.GetValueOrDefault(false);
-                var port = parsed.Port.GetValueOrDefault(27017);
-                var csCollectionName = string.IsNullOrEmpty(parsed.ChangeSetCollectionName) ? "migrations" : parsed.ChangeSetCollectionName;
-
-                var result = Migrator.Migrator.Migrate(parsed.Server, parsed.HostName, port, parsed.Database, parsed.ManifestFile, warn, csCollectionName, Console.WriteLine, Console.Error.WriteLine).Result;
-                result.Match(
-                    (s, ms) =>
-                    {
-                        Console.WriteLine(s);
-                        Environment.Exit(0);
-                    },
-                    fails =>
-                    {
-                        Console.WriteLine(fails.Head);
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.Error.WriteLine(fails.TailOrNull);
-                        Console.ResetColor();
-                        Environment.Exit(-1);
-                    });
+                Migrator.Migrator.Migrate(parsed.Server, parsed.HostName, parsed.Port, parsed.Database, parsed.ManifestFile, parsed.WarnOnOneTimeScriptChange, parsed.ChangeSetCollectionName, Console.WriteLine, Console.Error.WriteLine)
+                    .Result
+                    .Match(
+                        (s, ms) =>
+                        {
+                            Console.WriteLine(s);
+                            Environment.Exit(0);
+                        },
+                        fails =>
+                        {
+                            Console.WriteLine(fails.Head);
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.Error.WriteLine(fails.TailOrNull);
+                            Console.ResetColor();
+                            Environment.Exit(-1);
+                        });
             }
             else
             {

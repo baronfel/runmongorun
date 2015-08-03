@@ -67,15 +67,13 @@ namespace Migrator
 
         static Result<string, string> ExecCommandChangeSet(string mongoPath, string hostName, int port, string database, ChangeSet changeSet)
         {
-            var fqnMongoPath = Path.Combine(mongoPath, "mongo.exe");
-            var connstring = string.Format("{hostName}:{port}/{database}", hostName, port, database);
+            var connstring = string.Format("{0}:{1}/{2}", hostName, port, database);
             var ops = new ConsoleOps(
-                "print ('Begining ChangeSet[{changeSet.ChangId}] from File[{changeSet.File}]')",
+                string.Format("print ('Begining ChangeSet[{0}] from File[{1}]')", changeSet.ChangeId, changeSet.File),
                 changeSet.Content,
-                "print ('Finishing ChangeSet[{changeSet.ChangId}] from File[{changeSet.File}]')"
+                string.Format("print ('Finishing ChangeSet[{0}] from File[{1}]')", changeSet.ChangeId, changeSet.File)
                 );
-
-            return ExecProcess(fqnMongoPath, connstring, ops);
+            return ExecProcess("mongo.exe", mongoPath, connstring, ops);
         }
     }
 

@@ -17,17 +17,16 @@ namespace Migrator
 
         public static IEnumerable<ChangeSet> ReadScripts(string manifestPath)
         {
-            if (File.Exists(manifestPath)) throw new ArgumentException("no file exists at manifest path", nameof(manifestPath));
-
-            var files = File.ReadAllLines(manifestPath).Where(IsNotNullOrWhiteSpace);
-            var changeSets = files.Select(ReadChangeSets).SelectMany(Id);
+            if (!File.Exists(manifestPath)) throw new ArgumentException("no file exists at manifest path", nameof(manifestPath));
+            var rootPath = Path.GetDirectoryName(manifestPath);
+            var fullFilePaths = File.ReadAllLines(manifestPath).Where(IsNotNullOrWhiteSpace).Select(x => Path.Combine(rootPath, x));
+            var changeSets = fullFilePaths.Select(ReadChangeSets).SelectMany(Id);
             return changeSets;
         }
 
         static IEnumerable<ChangeSet> ReadChangeSets(string scriptPath)
         {
-            var fqnPath = Path.IsPathRooted(scriptPath) ? scriptPath : Path.Combine(Environment.CurrentDirectory, scriptPath);
-            if (!File.Exists(fqnPath)) throw new ArgumentException(string.Format("path {0} does not exist", fqnPath), nameof(scriptPath));
+            if (!File.Exists(scriptPath)) throw new ArgumentException(string.Format("path {0} does not exist", scriptPath), nameof(scriptPath));
 
             var lines = File.ReadAllLines(scriptPath).Where(IsNotNullOrWhiteSpace);
 

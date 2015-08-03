@@ -12,7 +12,7 @@ namespace Migrator
         static readonly UpdateDefinitionBuilder<ChangeSet> _updater = new UpdateDefinitionBuilder<ChangeSet>();
         static readonly UpdateOptions _updateOpts = new UpdateOptions { IsUpsert = true };
 
-        static string MakeMongoUrl(string server, int port) => string.Format("mongodb://{server}:{port}", server, port);
+        static string MakeMongoUrl(string server, int port) => string.Format("mongodb://{0}:{1}", server, port);
 
 
         public ChangeSetRepo(string server, int port, string database, string changeSetCollectionName)

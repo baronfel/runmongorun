@@ -21,11 +21,12 @@ namespace Migrator
             public string Footer { get; }
         }
 
-        public static Result<string, string> ExecProcess(string exepath, string args, ConsoleOps op)
+        public static Result<string, string> ExecProcess(string fileToExec, string workingDir, string args, ConsoleOps op)
         {
             var startInfo = new ProcessStartInfo()
             {
-                FileName = exepath,
+                FileName = fileToExec,
+                WorkingDirectory = workingDir,
                 Arguments = args,
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
