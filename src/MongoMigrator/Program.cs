@@ -74,28 +74,29 @@ namespace MongoMigrator
             var parser = new Parser(s => s = _parserSettings);
             if (parser.ParseArguments(args, parsed))
             {
-                Migrator.Migrator.Migrate(parsed.Server, parsed.HostName, parsed.Port, parsed.Database, parsed.ManifestFile, parsed.WarnOnOneTimeScriptChange, parsed.ChangeSetCollectionName, Console.WriteLine, Console.Error.WriteLine)
-                    .Result
-                    .Match(
-                        (s, ms) =>
-                        {
-                            Console.WriteLine(s);
-                            Environment.Exit(0);
-                        },
-                        fails =>
-                        {
-                            Console.WriteLine(fails.Head);
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.Error.WriteLine(fails.TailOrNull);
-                            Console.ResetColor();
-                            Environment.Exit(-1);
-                        });
+                var result =
+                    Migrator.Migrator.Migrate(parsed.Server, parsed.HostName, parsed.Port, parsed.Database, parsed.ManifestFile, parsed.WarnOnOneTimeScriptChange, parsed.ChangeSetCollectionName, Console.WriteLine, Console.Error.WriteLine).Result;
+
+                Console.WriteLine((result as Chessie.ErrorHandling.Result<string, string>.Ok).Item1);
+                if (result.IsBad)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine((result as Chessie.ErrorHandling.Result<string, string>.Bad).Item.ToString());
+                    Console.ResetColor();
+                    Console.ReadLine();
+                    Environment.Exit(-1);
+                }
+                else
+                {
+                    Environment.Exit(0);
+                }
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(parsed.GetUsage());
                 Console.ResetColor();
+                Console.ReadLine();
                 Environment.Exit(-1);
             }
         }

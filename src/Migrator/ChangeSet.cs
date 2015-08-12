@@ -19,7 +19,7 @@ namespace Migrator
         [BsonElement(elementName: "file")]
         public string File { get; set; }
         [BsonIgnore]
-        public List<string> Content { get; set; }
+        public List<string> Content { get; set; } = new List<string>();
         [BsonElement(elementName: "hash")]
         public Guid? Hash => MakeHash();
 

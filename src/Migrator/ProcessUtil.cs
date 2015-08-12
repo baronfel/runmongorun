@@ -1,7 +1,9 @@
 ﻿
 using Chessie.ErrorHandling;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 namespace Migrator
@@ -21,12 +23,11 @@ namespace Migrator
             public string Footer { get; }
         }
 
-        public static Result<string, string> ExecProcess(string fileToExec, string workingDir, string args, ConsoleOps op)
+        public static Tuple<string, string> ExecProcess(string fqnMongoPath, string args, ConsoleOps op)
         {
             var startInfo = new ProcessStartInfo()
             {
-                FileName = fileToExec,
-                WorkingDirectory = workingDir,
+                FileName = fqnMongoPath,
                 Arguments = args,
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
@@ -41,25 +42,46 @@ namespace Migrator
 
             var outBuilder = new StringBuilder();
             var errBuilder = new StringBuilder();
-            process.OutputDataReceived += (o, d) => outBuilder.AppendLine(d.Data);
+            process.OutputDataReceived += (o, d) =>
+            {
+                if (string.IsNullOrEmpty(d.Data)) return;
+                string errorData;
+                if (TryParseErrorLine(d.Data, out errorData))
+                {
+                    errBuilder.AppendLine(errorData);
+                }
+                else
+                {
+                    outBuilder.AppendLine(d.Data);
+                }
+            };
             process.ErrorDataReceived += (o, d) => errBuilder.AppendLine(d.Data);
             process.Start();
-            process.StandardInput.WriteLine(op.Header);
 
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
-            foreach (var line in op.Ops)
-            {
-                process.StandardInput.WriteLine(line);
-            }
-
+            process.StandardInput.WriteLine(op.Header);
+            process.StandardInput.WriteLine(string.Concat(string.Empty, op.Ops));
             process.StandardInput.WriteLine(op.Footer);
             process.StandardInput.WriteLine("exit");
             process.WaitForExit();
 
-            if (!string.IsNullOrEmpty(errBuilder.ToString())) return Result<string, string>.FailWith(errBuilder.ToString());
-            return Result<string,string>.Succeed(outBuilder.ToString());
+            var error = errBuilder.ToString();
+            if (!string.IsNullOrEmpty(error) && !error.Equals(Environment.NewLine)) return Tuple.Create(outBuilder.ToString(), error);
+            return Tuple.Create(outBuilder.ToString(), string.Empty);
         }
 
+        static bool TryParseErrorLine(string data, out string err)
+        {
+            var parts = data.Split(' ');
+            if(parts.Length > 3 && parts[1] == "E")
+            {
+                // error line! 
+                err = data.Substring((parts.Take(3).Sum(x => x.Length) + 2)).Trim();
+                return true;
+            }
+            err = string.Empty;
+            return false;
+        }
     }
 }

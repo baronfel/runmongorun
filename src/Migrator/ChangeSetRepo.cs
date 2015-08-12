@@ -36,7 +36,7 @@ namespace Migrator
                 .Set(e => e.Hash, changeSet.Hash);
 
                 var result = await _collection.UpdateOneAsync(filter, update, _updateOpts);
-                return await GetById(result.UpsertedId.ToString());
+                return await GetById(changeSet.ChangeId);
         }
     }
 }

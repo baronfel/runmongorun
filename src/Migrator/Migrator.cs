@@ -31,16 +31,16 @@ namespace Migrator
             foreach(var changeSet in changesToRun)
             {
                 var result = ExecCommandChangeSet(mongoPath, hostname, port, database, changeSet);
-                if (result.IsBad) return Result<string,string>.FailWith(result.FailedWith());
+                if (!string.IsNullOrEmpty(result.Item2)) return Result<string,string>.FailWith(new[] { result.Item1, result.Item2 });
 
                 var upsertResult = Result<ChangeSet, Exception>.Try(() => repo.Upsert(changeSet).Result).MapError(e => e.Message);
                 if (upsertResult.IsBad)
                 {
-                    var messages = new[] { result.SucceededWith() }.Concat(upsertResult.FailedWith().Select(Id));
+                    var messages = new[] { result.Item1 }.Concat(upsertResult.FailedWith().Select(Id));
                     return Result<string, string>.FailWith(messages);
                 }
 
-                result.Match((s, ms) => info.Append(s), fs => { return; });
+                info.AppendLine(result.Item1);
             }
 
             return Result<string, string>.Succeed(info.ToString());
@@ -65,7 +65,7 @@ namespace Migrator
             return true;
         }
 
-        static Result<string, string> ExecCommandChangeSet(string mongoPath, string hostName, int port, string database, ChangeSet changeSet)
+        static Tuple<string, string> ExecCommandChangeSet(string mongoPath, string hostName, int port, string database, ChangeSet changeSet)
         {
             var connstring = string.Format("{0}:{1}/{2}", hostName, port, database);
             var ops = new ConsoleOps(
@@ -73,7 +73,8 @@ namespace Migrator
                 changeSet.Content,
                 string.Format("print ('Finishing ChangeSet[{0}] from File[{1}]')", changeSet.ChangeId, changeSet.File)
                 );
-            return ExecProcess("mongo.exe", mongoPath, connstring, ops);
+            var fqnPath = Path.Combine(mongoPath, "mongo.exe");
+            return ExecProcess(fqnPath, connstring, ops);
         }
     }
 
