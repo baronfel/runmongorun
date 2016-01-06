@@ -10,7 +10,7 @@ namespace MongoMigrator
     class Options
     {
         [Option('m', "mongoPath", Required = false, DefaultValue = "mongo.exe", HelpText = "The path to the mongo executable to use.  If not set, assumes mongo.exe is on your PATH.")]
-        public string Server { get; set; }
+        public string MongoPath { get; set; }
 
         [Option('d', "database", Required = true, HelpText = "The mongo database name to connect to.")]
         public string Database { get; set; }
@@ -75,7 +75,7 @@ namespace MongoMigrator
             if (parser.ParseArguments(args, parsed))
             {
                 var result =
-                    Migrator.Migrator.Migrate(parsed.Server, parsed.HostName, parsed.Port, parsed.Database, parsed.ManifestFile, parsed.WarnOnOneTimeScriptChange, parsed.ChangeSetCollectionName, Console.WriteLine, Console.Error.WriteLine).Result;
+                    Migrator.Migrator.Migrate(parsed.MongoPath, parsed.HostName, parsed.Port, parsed.Database, parsed.ManifestFile, parsed.WarnOnOneTimeScriptChange, parsed.ChangeSetCollectionName, Console.WriteLine, Console.Error.WriteLine).Result;
 
                 Console.WriteLine((result as Chessie.ErrorHandling.Result<string, string>.Ok).Item1);
                 if (result.IsBad)

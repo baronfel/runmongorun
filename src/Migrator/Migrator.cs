@@ -8,7 +8,8 @@ using Chessie.ErrorHandling.CSharp;
 
 using static Func.Utils;
 using static Migrator.ProcessUtil;
-
+using MongoDB.Driver;
+using MongoDB.Driver.Core.Connections;
 
 namespace Migrator
 {
@@ -65,9 +66,23 @@ namespace Migrator
             return true;
         }
 
+        
+        static string MakeCommandLineConnectionString(string hostname, int port, string database)
+        {
+            var mongourl = new MongoUrlBuilder()
+            {
+                Server = new MongoServerAddress(hostname, port),
+            }.ToMongoUrl();
+
+            var hostnameAndPort = string.Format("{0}:{1}", hostname, port);
+            var replSetName = new MongoClient(mongourl)?.Cluster?.Settings?.ReplicaSetName ?? string.Empty;
+            var actualHost = string.IsNullOrEmpty(replSetName) ? hostnameAndPort : string.Format("{0}/{1}", replSetName, hostnameAndPort);
+            return string.Format("{0} --host \"{1}\"", database, actualHost);
+        }
+
         static Tuple<string, string> ExecCommandChangeSet(string mongoPath, string hostName, int port, string database, ChangeSet changeSet)
         {
-            var connstring = string.Format("{0}:{1}/{2}", hostName, port, database);
+            var connstring = MakeCommandLineConnectionString(hostName, port, database);
             var ops = new ConsoleOps(
                 string.Format("print ('Begining ChangeSet[{0}] from File[{1}]')", changeSet.ChangeId, changeSet.File),
                 changeSet.Content,

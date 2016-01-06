@@ -55,7 +55,11 @@ namespace Migrator
                     outBuilder.AppendLine(d.Data);
                 }
             };
-            process.ErrorDataReceived += (o, d) => errBuilder.AppendLine(d.Data);
+            process.ErrorDataReceived += (o, d) =>
+            {
+                if (string.IsNullOrEmpty(d.Data)) return;
+                errBuilder.AppendLine(d.Data);
+            };
             process.Start();
 
             process.BeginOutputReadLine();
@@ -67,8 +71,12 @@ namespace Migrator
             process.WaitForExit();
 
             var error = errBuilder.ToString();
-            if (!string.IsNullOrEmpty(error) && !error.Equals(Environment.NewLine)) return Tuple.Create(outBuilder.ToString(), error);
-            return Tuple.Create(outBuilder.ToString(), string.Empty);
+            if (!string.IsNullOrEmpty(error) && !error.Equals(Environment.NewLine)) {
+                return Tuple.Create(outBuilder.ToString(), error);
+            }
+            else {
+                return Tuple.Create(outBuilder.ToString(), string.Empty);
+            }
         }
 
         static bool TryParseErrorLine(string data, out string err)
