@@ -1,0 +1,15 @@
+type file
+id MongoMigrator
+description
+    Migrate your mongo scripts in style
+version
+    0.1.0
+authors
+    Paket team
+summary
+    Migrate your mongo scripts in style
+projecturl http://github.com/baronfel/mongomigrator
+tags
+    mongo
+files
+    merged/mongomigrator.exe ==> tools

@@ -49,6 +49,9 @@ let solutionFile  = "MongoMigrator.sln"
 // Pattern specifying assemblies to be tested using NUnit
 let testAssemblies = "tests/**/bin/Release/*Tests*.dll"
 
+let buildDir = "build"
+let buildMergedDir = "merged"
+
 // Git configuration (used for publishing documentation in gh-pages branch)
 // The profile where the project is posted
 let gitOwner = "baronfel" 
@@ -134,14 +137,16 @@ Target "Build" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Run the unit tests using test runner
 
-Target "RunTests" (fun _ ->
-    !! testAssemblies
-    |> NUnit (fun p ->
-        { p with
-            DisableShadowCopy = true
-            TimeOut = TimeSpan.FromMinutes 20.
-            OutputFile = "TestResults.xml" })
-)
+Target "RunTests" ignore
+
+//(fun _ ->
+//    !! testAssemblies
+//    |> NUnit (fun p ->
+//        { p with
+//            DisableShadowCopy = true
+//            TimeOut = TimeSpan.FromMinutes 20.
+//            OutputFile = "TestResults.xml" })
+//)
 
 #if MONO
 #else
@@ -312,7 +317,31 @@ Target "Release" (fun _ ->
     |> Async.RunSynchronously
 )
 
-Target "BuildPackage" DoNothing
+Target "BuildPackage" ignore
+
+Target "ILMerge" (fun _ ->
+    CreateDir buildMergedDir
+    CreateDir buildDir
+    CleanDir buildMergedDir
+    CleanDir buildDir
+
+    let toPack =
+        ["mongomigrator.exe"; "Migrator.dll"; "Utils.dll"; "CommandLine.dll"; "FSharp.Core.dll"; "MongoDB.Bson.dll"; "MongoDB.Driver.Core.dll"; "MongoDB.Driver.dll";]
+        |> List.map (fun f -> 
+            File.Move(__SOURCE_DIRECTORY__ </>"bin/MongoMigrator" </> f, __SOURCE_DIRECTORY__ </> buildDir </> f)
+            f
+        )
+        |> List.map (fun l -> buildDir </> l)
+        |> separated " "
+
+    let result =
+        ExecProcess (fun info ->
+            info.FileName <- currentDirectory </> "packages" </> "ILRepack" </> "tools" </> "ILRepack.exe"
+            info.Arguments <- sprintf "/verbose /lib:%s /ver:%s /out:%s %s" buildDir release.AssemblyVersion (buildMergedDir @@ "mongomigrator.exe") toPack
+            ) (TimeSpan.FromMinutes 5.)
+
+    if result <> 0 then failwithf "Error during ILRepack execution."
+)
 
 // --------------------------------------------------------------------------------------
 // Run all targets by default. Invoke 'build <Target>' to override
@@ -334,6 +363,7 @@ Target "All" DoNothing
 #else
   =?> ("SourceLink", Pdbstr.tryFind().IsSome )
 #endif
+  ==> "ILMerge"
   ==> "NuGet"
   ==> "BuildPackage"
 
