@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 
 using Chessie.ErrorHandling.CSharp;
+using System.Reflection;
 
 namespace MongoMigrator
 {
@@ -36,9 +37,10 @@ namespace MongoMigrator
         [HelpOption]
         public string GetUsage()
         {
+            var name = Assembly.GetExecutingAssembly().GetName();
             var help = new HelpText
             {
-                Heading = new HeadingInfo("MongoMigrator", "1.0"),
+                Heading = new HeadingInfo(name.Name, name.Version.ToString()),
                 Copyright = new CopyrightInfo("me!", 2015),
                 AdditionalNewLineAfterOption = true,
                 AddDashesToOption = true

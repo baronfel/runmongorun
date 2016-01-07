@@ -27,7 +27,7 @@ open SourceLink
 
 // The name of the project
 // (used by attributes in AssemblyInfo, name of a NuGet package and directory in 'src')
-let project = "MongoMigrator"
+let project = "RunMongoRun"
 
 // Short summary of the project
 // (used as description in AssemblyInfo and as a short summary for NuGet package)
@@ -38,7 +38,7 @@ let summary = "A repeatable, deterministic mongo script runner."
 let description = "A repeatable, deterministic mongo script runner."
 
 // List of author names (for NuGet package)
-let authors = [ "Thomas Phipps" ]
+let authors = [ "Chet Husk"; "Thomas Phipps" ]
 
 // Tags for your project (for NuGet package)
 let tags = "mongo devops"
@@ -326,9 +326,9 @@ Target "ILMerge" (fun _ ->
     CleanDir buildDir
 
     let toPack =
-        ["mongomigrator.exe"; "Migrator.dll"; "Utils.dll"; "CommandLine.dll"; "FSharp.Core.dll"; "MongoDB.Bson.dll"; "MongoDB.Driver.Core.dll"; "MongoDB.Driver.dll";]
+        ["runmongorun.exe"; "Migrator.dll"; "Utils.dll"; "CommandLine.dll"; "FSharp.Core.dll"; "MongoDB.Bson.dll"; "MongoDB.Driver.Core.dll"; "MongoDB.Driver.dll";]
         |> List.map (fun f -> 
-            File.Move(__SOURCE_DIRECTORY__ </>"bin/MongoMigrator" </> f, __SOURCE_DIRECTORY__ </> buildDir </> f)
+            File.Move(__SOURCE_DIRECTORY__ </>"bin/RunMongoRun" </> f, __SOURCE_DIRECTORY__ </> buildDir </> f)
             f
         )
         |> List.map (fun l -> buildDir </> l)
@@ -337,7 +337,7 @@ Target "ILMerge" (fun _ ->
     let result =
         ExecProcess (fun info ->
             info.FileName <- currentDirectory </> "packages" </> "ILRepack" </> "tools" </> "ILRepack.exe"
-            info.Arguments <- sprintf "/verbose /lib:%s /ver:%s /out:%s %s" buildDir release.AssemblyVersion (buildMergedDir @@ "mongomigrator.exe") toPack
+            info.Arguments <- sprintf "/verbose /lib:%s /ver:%s /out:%s %s" buildDir release.AssemblyVersion (buildMergedDir @@ "runmongorun.exe") toPack
             ) (TimeSpan.FromMinutes 5.)
 
     if result <> 0 then failwithf "Error during ILRepack execution."

@@ -2,7 +2,7 @@
 using System.Reflection;
 
 [assembly: AssemblyTitleAttribute("Migrator")]
-[assembly: AssemblyProductAttribute("MongoMigrator")]
+[assembly: AssemblyProductAttribute("RunMongoRun")]
 [assembly: AssemblyDescriptionAttribute("A repeatable, deterministic mongo script runner.")]
 [assembly: AssemblyVersionAttribute("0.1.0")]
 [assembly: AssemblyFileVersionAttribute("0.1.0")]

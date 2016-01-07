@@ -1,5 +1,5 @@
 type file
-id MongoMigrator
+id RunMongoRun
 description
     Migrate your mongo scripts in style
 version
@@ -12,4 +12,4 @@ projecturl http://github.com/baronfel/mongomigrator
 tags
     mongo
 files
-    merged/mongomigrator.exe ==> tools
+    merged/runmongorun.exe ==> tools
