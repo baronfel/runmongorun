@@ -13,7 +13,7 @@ namespace Migrator
 {
     public class Migrator
     {
-        public static async Task<Result<bool, Tuple<int, string>>> Migrate(string mongoPath, string hostname, int port, string database, string manifestPath, bool warn, string changeSetCollectionName, Action<string> logFunc, Action<string> errFunc)
+        public static async Task<Result<bool, Tuple<int, string>>> Migrate(string pathToMongo, string hostname, int port, string database, string manifestPath, bool warn, string changeSetCollectionName, Action<string> logFunc, Action<string> errFunc)
         {
             var repo = new ChangeSetRepo(hostname, port, database, changeSetCollectionName);
             var changesets = ManifestReader.ReadScripts(manifestPath);
@@ -29,7 +29,7 @@ namespace Migrator
             var info = new StringBuilder();
             foreach(var changeSet in changesToRun)
             {
-                var result = ExecCommandChangeSet(mongoPath, hostname, port, database, changeSet, logFunc, errFunc);
+                var result = ExecCommandChangeSet(pathToMongo, hostname, port, database, changeSet, logFunc, errFunc);
                 if (result.IsBad) return result.MapError(retCode => Tuple.Create(retCode, string.Format("the mongo process exited with code {0}.", retCode)));
                 var upsertResult = Result<ChangeSet, Exception>.Try(() => repo.Upsert(changeSet).Result).MapError(e => e.Message);
                 if (upsertResult.IsBad) return upsertResult.Map(cs => false).MapError(s => Tuple.Create(1, s)); // ignore the changeset and return a false value in the failure case.
@@ -42,16 +42,17 @@ namespace Migrator
         {
             if ((cs.Hash != dbcs.Hash))
             {
-                var message = string.Format("update changeSet [{0}] in script [{1}] has changed since the last time is was run.", cs.ChangeId, cs.File);
+
                 if (!warn)
                 {
+                    var message = string.Format("Changeset '{0}' in '{1}' has changed since the last time is was run. Skipping changeset.", cs.ChangeId, cs.File);
                     errFunc(message);
-                    errFunc("if this is intended change the changeSetId");
-                    throw new InvalidOperationException(message);
+                    return false;
                 }
-                else
-                {
+                else {
+                    var message = string.Format("Changeset '{0}' in '{1}' has changed since the last time is was run. If this is intended, please change the changeset id to avoid collisions.", cs.ChangeId, cs.File);
                     logFunc(message);
+                    return true;
                 }
             }
             return true;
@@ -70,16 +71,15 @@ namespace Migrator
             return string.Format("{0} --host \"{1}\"", database, actualHost);
         }
 
-        static Result<bool, int> ExecCommandChangeSet(string mongoPath, string hostName, int port, string database, ChangeSet changeSet, Action<string> logFunc, Action<string> errFunc)
+        static Result<bool, int> ExecCommandChangeSet(string pathToMongo, string hostName, int port, string database, ChangeSet changeSet, Action<string> logFunc, Action<string> errFunc)
         {
             var connstring = MakeCommandLineConnectionString(hostName, port, database);
             var ops = new ConsoleOps(
-                string.Format("print ('Begining ChangeSet[{0}] from File[{1}]')", changeSet.ChangeId, changeSet.File),
+                string.Format("Executing Changeset '{0}' from file '{1}'", changeSet.ChangeId, changeSet.File),
                 changeSet.Content,
-                string.Format("print ('Finishing ChangeSet[{0}] from File[{1}]')", changeSet.ChangeId, changeSet.File)
+                string.Format("Finished Changeset '{0}' from file '{1}'", changeSet.ChangeId, changeSet.File)
                 );
-            var fqnPath = Path.Combine(mongoPath, "mongo.exe");
-            return ExecProcess(fqnPath, connstring, ops, logFunc, errFunc);
+            return ExecProcess(pathToMongo, connstring, ops, logFunc, errFunc);
         }
     }
 

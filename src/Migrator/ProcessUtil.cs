@@ -43,33 +43,32 @@ namespace Migrator
             process.OutputDataReceived += (o, d) =>
             {
                 if (string.IsNullOrEmpty(d.Data)) return;
-                string errorData;
-                if (TryParseErrorLine(d.Data, out errorData))
+                if (TryParseErrorLine(d.Data))
                 {
                     errored = true;
-                    errFunc(errorData);
+                    errFunc("-----" + d.Data);
                 }
                 else
                 {
-                    logFunc(d.Data);
+                    logFunc("-----" + d.Data);
                 }
             };
             process.ErrorDataReceived += (o, d) =>
             {
                 if (string.IsNullOrEmpty(d.Data) || string.IsNullOrWhiteSpace(d.Data)) return;
                 errored = true;
-                errFunc(d.Data);
+                errFunc("-----" + d.Data);
             };
             process.Start();
 
+            logFunc(op.Header);
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
-            process.StandardInput.WriteLine(op.Header);
-            process.StandardInput.WriteLine(string.Concat(string.Empty, op.Ops));
-            process.StandardInput.WriteLine(op.Footer);
+            var command = string.Join(string.Empty, op.Ops);
+            process.StandardInput.WriteLine(command);
             process.StandardInput.WriteLine("exit");
             process.WaitForExit();
-
+            logFunc(op.Footer);
 
             if (errored)
             {
@@ -81,16 +80,17 @@ namespace Migrator
             }
         }
 
-        static bool TryParseErrorLine(string data, out string err)
+        static bool TryParseErrorLine(string data)
         {
             var parts = data.Split(' ');
-            if(parts.Length > 3 && parts[1] == "E")
+            if (parts.Length >= 2 && parts[1] == "E")
             {
-                // error line! 
-                err = data.Substring((parts.Take(3).Sum(x => x.Length) + 2)).Trim();
                 return true;
             }
-            err = string.Empty;
+            if (parts.Length >= 3 && parts[2].Equals("SyntaxError:", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
             return false;
         }
     }
