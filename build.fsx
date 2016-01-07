@@ -44,7 +44,7 @@ let authors = [ "Chet Husk"; "Thomas Phipps" ]
 let tags = "mongo devops"
 
 // File system information 
-let solutionFile  = "MongoMigrator.sln"
+let solutionFile  = "RunMongoRun.sln"
 
 // Pattern specifying assemblies to be tested using NUnit
 let testAssemblies = "tests/**/bin/Release/*Tests*.dll"
@@ -58,7 +58,7 @@ let gitOwner = "baronfel"
 let gitHome = "https://github.com/" + gitOwner
 
 // The name of the project on GitHub
-let gitName = "MongoMigrator"
+let gitName = "RunMongoRun"
 
 // The url for the raw files hosted
 let gitRaw = environVarOrDefault "gitRaw" "https://raw.github.com/baronfel"

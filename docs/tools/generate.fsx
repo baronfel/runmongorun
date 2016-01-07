@@ -11,17 +11,17 @@
 // (This is the original behaviour of ProjectScaffold prior to multi project support)
 let referenceBinaries = []
 // Web site location for the generated documentation
-let website = "/MongoMigrator"
+let website = "/RunMongoRun"
 
-let githubLink = "http://github.com/dirkelfman/MongoMigrator"
+let githubLink = "http://github.com/baronfel/RunMongoRun"
 
 // Specify more information about your project
 let info =
-  [ "project-name", "MongoMigrator"
-    "project-author", "Thomas Phipps"
+  [ "project-name", "RunMongoRun"
+    "project-author", "Chet Husk, Thomas Phipps"
     "project-summary", "A repeatable, deterministic mongo script runner."
     "project-github", githubLink
-    "project-nuget", "http://nuget.org/packages/MongoMigrator" ]
+    "project-nuget", "http://nuget.org/packages/RunMongoRun" ]
 
 // --------------------------------------------------------------------------------------
 // For typical project, no changes are needed below

@@ -8,7 +8,7 @@ authors
     Chet Husk, Thomas Phipps
 summary
     Migrate your mongo scripts in style
-projecturl http://github.com/baronfel/mongomigrator
+projecturl http://github.com/baronfel/RunMongoRun
 tags
     mongo
 files

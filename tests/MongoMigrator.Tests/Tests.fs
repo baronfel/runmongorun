@@ -1,4 +1,4 @@
-module MongoMigrator.Tests
+module RunMongoRun.Tests
 
 open Migrator
 open NUnit.Framework

@@ -4,7 +4,7 @@
 #I "../../bin"
 
 (**
-MongoMigrator
+RunMongoRun
 ======================
 
 Documentation
@@ -13,7 +13,7 @@ Documentation
   <div class="span1"></div>
   <div class="span6">
     <div class="well well-small" id="nuget">
-      The MongoMigrator library can be <a href="https://nuget.org/packages/MongoMigrator">installed from NuGet</a>:
+      The RunMongoRun library can be <a href="https://nuget.org/packages/RunMongoRun">installed from NuGet</a>:
       <pre>PM> Install-Package MongoMigrator</pre>
     </div>
   </div>
@@ -26,10 +26,7 @@ Example
 This example demonstrates using a function defined in this sample library.
 
 *)
-#r "MongoMigrator.dll"
-open MongoMigrator
 
-printfn "hello = %i" <| Library.hello 0
 
 (**
 Some more info
@@ -59,9 +56,9 @@ The library is available under Public Domain license, which allows modification 
 redistribution for both commercial and non-commercial purposes. For more information see the 
 [License file][license] in the GitHub repository. 
 
-  [content]: https://github.com/fsprojects/MongoMigrator/tree/master/docs/content
-  [gh]: https://github.com/fsprojects/MongoMigrator
-  [issues]: https://github.com/fsprojects/MongoMigrator/issues
-  [readme]: https://github.com/fsprojects/MongoMigrator/blob/master/README.md
-  [license]: https://github.com/fsprojects/MongoMigrator/blob/master/LICENSE.txt
+  [content]: https://github.com/baronfel/RunMongoRun/tree/master/docs/content
+  [gh]: https://github.com/baronfel/RunMongoRun
+  [issues]: https://github.com/baronfel/RunMongoRun/issues
+  [readme]: https://github.com/baronfel/RunMongoRun/blob/master/README.md
+  [license]: https://github.com/baronfel/RunMongoRun/blob/master/LICENSE.txt
 *)

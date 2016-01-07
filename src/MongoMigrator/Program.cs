@@ -6,7 +6,7 @@ using System.Linq;
 using Chessie.ErrorHandling.CSharp;
 using System.Reflection;
 
-namespace MongoMigrator
+namespace RunMongoRun
 {
     class Options
     {
@@ -56,7 +56,7 @@ namespace MongoMigrator
                 }
             }
 
-            help.AddPreOptionsLine("Usage: mongoMigrator [options]");
+            help.AddPreOptionsLine("Usage: RunMongoRun [options]");
             help.AddOptions(this);
             return help;
         }
