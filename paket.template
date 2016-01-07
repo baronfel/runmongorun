@@ -5,7 +5,7 @@ description
 version
     0.1.0
 authors
-    Paket team
+    Chet Husk, Thomas Phipps
 summary
     Migrate your mongo scripts in style
 projecturl http://github.com/baronfel/mongomigrator
