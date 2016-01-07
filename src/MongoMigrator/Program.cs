@@ -68,36 +68,32 @@ namespace MongoMigrator
             IgnoreUnknownArguments = true,
         };
 
+        static void WriteError(string s)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(s);
+            Console.ResetColor();
+        }
+
         static void Main(string[] args)
         {
             var parsed = new Options();
-            var parser = new Parser(s => s = _parserSettings);
-            if (parser.ParseArguments(args, parsed))
+            if (new Parser(s => s = _parserSettings).ParseArguments(args, parsed))
             {
-                var result =
-                    Migrator.Migrator.Migrate(parsed.MongoPath, parsed.HostName, parsed.Port, parsed.Database, parsed.ManifestFile, parsed.WarnOnOneTimeScriptChange, parsed.ChangeSetCollectionName, Console.WriteLine, Console.Error.WriteLine).Result;
+                var result = Migrator.Migrator.Migrate(parsed.MongoPath, parsed.HostName, parsed.Port, parsed.Database, parsed.ManifestFile, parsed.WarnOnOneTimeScriptChange, parsed.ChangeSetCollectionName, Console.WriteLine, Console.Error.WriteLine).Result;
 
-                Console.WriteLine((result as Chessie.ErrorHandling.Result<string, string>.Ok).Item1);
-                if (result.IsBad)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine((result as Chessie.ErrorHandling.Result<string, string>.Bad).Item.ToString());
-                    Console.ResetColor();
-                    Console.ReadLine();
-                    Environment.Exit(-1);
-                }
-                else
-                {
-                    Environment.Exit(0);
-                }
+                result.Match(
+                    (suc, msgs) => Environment.Exit(0),
+                    failure =>
+                    {
+                        WriteError(string.Join(Environment.NewLine, failure.AsEnumerable().Select(x => x.Item2)));
+                        Environment.Exit(failure.First().Item1);
+                    });
             }
             else
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(parsed.GetUsage());
-                Console.ResetColor();
-                Console.ReadLine();
-                Environment.Exit(-1);
+                WriteError(parsed.GetUsage());
+                Environment.Exit(1);
             }
         }
     }

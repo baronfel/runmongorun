@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 namespace Migrator
 {
@@ -23,8 +22,9 @@ namespace Migrator
             public string Footer { get; }
         }
 
-        public static Tuple<string, string> ExecProcess(string fqnMongoPath, string args, ConsoleOps op)
+        public static Result<bool, int> ExecProcess(string fqnMongoPath, string args, ConsoleOps op, Action<string> logFunc, Action<string> errFunc)
         {
+            bool errored = false;
             var startInfo = new ProcessStartInfo()
             {
                 FileName = fqnMongoPath,
@@ -40,25 +40,25 @@ namespace Migrator
                 StartInfo = startInfo,
             };
 
-            var outBuilder = new StringBuilder();
-            var errBuilder = new StringBuilder();
             process.OutputDataReceived += (o, d) =>
             {
                 if (string.IsNullOrEmpty(d.Data)) return;
                 string errorData;
                 if (TryParseErrorLine(d.Data, out errorData))
                 {
-                    errBuilder.AppendLine(errorData);
+                    errored = true;
+                    errFunc(errorData);
                 }
                 else
                 {
-                    outBuilder.AppendLine(d.Data);
+                    logFunc(d.Data);
                 }
             };
             process.ErrorDataReceived += (o, d) =>
             {
-                if (string.IsNullOrEmpty(d.Data)) return;
-                errBuilder.AppendLine(d.Data);
+                if (string.IsNullOrEmpty(d.Data) || string.IsNullOrWhiteSpace(d.Data)) return;
+                errored = true;
+                errFunc(d.Data);
             };
             process.Start();
 
@@ -70,12 +70,14 @@ namespace Migrator
             process.StandardInput.WriteLine("exit");
             process.WaitForExit();
 
-            var error = errBuilder.ToString();
-            if (!string.IsNullOrEmpty(error) && !error.Equals(Environment.NewLine)) {
-                return Tuple.Create(outBuilder.ToString(), error);
+
+            if (errored)
+            {
+                return Result<bool, int>.FailWith(process.ExitCode);
             }
-            else {
-                return Tuple.Create(outBuilder.ToString(), string.Empty);
+            else
+            {
+                return Result<bool, int>.Succeed(true, 0);
             }
         }
 

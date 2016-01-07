@@ -10,10 +10,7 @@ Introducing your project
 Say more
 
 *)
-#r "MongoMigrator.dll"
-open MongoMigrator
 
-Library.hello 0
 (**
 Some more info
 *)

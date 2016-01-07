@@ -6,16 +6,14 @@ using System.Threading.Tasks;
 using Chessie.ErrorHandling;
 using Chessie.ErrorHandling.CSharp;
 
-using static Func.Utils;
 using static Migrator.ProcessUtil;
 using MongoDB.Driver;
-using MongoDB.Driver.Core.Connections;
 
 namespace Migrator
 {
     public class Migrator
     {
-        public static async Task<Result<string, string>> Migrate(string mongoPath, string hostname, int port, string database, string manifestPath, bool warn, string changeSetCollectionName, Action<string> logFunc, Action<string> errFunc)
+        public static async Task<Result<bool, Tuple<int, string>>> Migrate(string mongoPath, string hostname, int port, string database, string manifestPath, bool warn, string changeSetCollectionName, Action<string> logFunc, Action<string> errFunc)
         {
             var repo = new ChangeSetRepo(hostname, port, database, changeSetCollectionName);
             var changesets = ManifestReader.ReadScripts(manifestPath);
@@ -31,23 +29,16 @@ namespace Migrator
             var info = new StringBuilder();
             foreach(var changeSet in changesToRun)
             {
-                var result = ExecCommandChangeSet(mongoPath, hostname, port, database, changeSet);
-                if (!string.IsNullOrEmpty(result.Item2)) return Result<string,string>.FailWith(new[] { result.Item1, result.Item2 });
-
+                var result = ExecCommandChangeSet(mongoPath, hostname, port, database, changeSet, logFunc, errFunc);
+                if (result.IsBad) return result.MapError(retCode => Tuple.Create(retCode, string.Format("the mongo process exited with code {0}.", retCode)));
                 var upsertResult = Result<ChangeSet, Exception>.Try(() => repo.Upsert(changeSet).Result).MapError(e => e.Message);
-                if (upsertResult.IsBad)
-                {
-                    var messages = new[] { result.Item1 }.Concat(upsertResult.FailedWith().Select(Id));
-                    return Result<string, string>.FailWith(messages);
-                }
-
-                info.AppendLine(result.Item1);
+                if (upsertResult.IsBad) return upsertResult.Map(cs => false).MapError(s => Tuple.Create(1, s)); // ignore the changeset and return a false value in the failure case.
             }
 
-            return Result<string, string>.Succeed(info.ToString());
+            return Result<bool, Tuple<int,string>>.Succeed(true);
         }
 
-        private static bool SameButWarning(ChangeSet cs, ChangeSet dbcs, bool warn, Action<string> logFunc, Action<string> errFunc)
+        static bool SameButWarning(ChangeSet cs, ChangeSet dbcs, bool warn, Action<string> logFunc, Action<string> errFunc)
         {
             if ((cs.Hash != dbcs.Hash))
             {
@@ -65,8 +56,7 @@ namespace Migrator
             }
             return true;
         }
-
-        
+      
         static string MakeCommandLineConnectionString(string hostname, int port, string database)
         {
             var mongourl = new MongoUrlBuilder()
@@ -80,7 +70,7 @@ namespace Migrator
             return string.Format("{0} --host \"{1}\"", database, actualHost);
         }
 
-        static Tuple<string, string> ExecCommandChangeSet(string mongoPath, string hostName, int port, string database, ChangeSet changeSet)
+        static Result<bool, int> ExecCommandChangeSet(string mongoPath, string hostName, int port, string database, ChangeSet changeSet, Action<string> logFunc, Action<string> errFunc)
         {
             var connstring = MakeCommandLineConnectionString(hostName, port, database);
             var ops = new ConsoleOps(
@@ -89,7 +79,7 @@ namespace Migrator
                 string.Format("print ('Finishing ChangeSet[{0}] from File[{1}]')", changeSet.ChangeId, changeSet.File)
                 );
             var fqnPath = Path.Combine(mongoPath, "mongo.exe");
-            return ExecProcess(fqnPath, connstring, ops);
+            return ExecProcess(fqnPath, connstring, ops, logFunc, errFunc);
         }
     }
 

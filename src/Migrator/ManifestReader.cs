@@ -24,12 +24,8 @@ namespace Migrator
             return changeSets;
         }
 
-        static IEnumerable<ChangeSet> ReadChangeSets(string scriptPath)
+        public static IEnumerable<ChangeSet> ReadFromFileAndLines(string scriptPath, IEnumerable<string> lines)
         {
-            if (!File.Exists(scriptPath)) throw new ArgumentException(string.Format("path {0} does not exist", scriptPath), nameof(scriptPath));
-
-            var lines = File.ReadAllLines(scriptPath).Where(IsNotNullOrWhiteSpace);
-
             var changeSets = new List<ChangeSet>();
             ChangeSet current = null;
             foreach (var line in lines)
@@ -40,7 +36,7 @@ namespace Migrator
                     current = new ChangeSet()
                     {
                         File = scriptPath,
-                        Author = match.Groups["author"].Value,
+                        Author = match.Groups["user"].Value,
                         ChangeId = match.Groups["changeset"].Value,
                         AlwaysRuns = match.Groups["runAlways"].Value == "true",
                         Content = new List<string>()
@@ -54,6 +50,13 @@ namespace Migrator
             }
 
             return changeSets;
+        }
+
+        public static IEnumerable<ChangeSet> ReadChangeSets(string scriptPath)
+        {
+            if (!File.Exists(scriptPath)) throw new ArgumentException(string.Format("path {0} does not exist", scriptPath), nameof(scriptPath));
+            var lines = File.ReadAllLines(scriptPath).Where(IsNotNullOrWhiteSpace);
+            return ReadFromFileAndLines(scriptPath, lines);
         }
 
         static bool IsNotNullOrWhiteSpace(string s) => !string.IsNullOrWhiteSpace(s) && !string.IsNullOrEmpty(s);
